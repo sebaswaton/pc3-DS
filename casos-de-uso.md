@@ -95,11 +95,9 @@
 1. El usuario elige el tipo de aporte: comentario, modificación o recurso.
 2. **Comentario:** se crea un `CommentNode` y se inserta como hijo del nodo seleccionado (raíz o respuesta, máx. 3 niveles).
 3. **Modificación:** se registra la propuesta de cambio al articulado; el colectivo recibe notificación para aprobar/rechazar.
-4. **Recurso:** el archivo pasa por escaneo antivirus; si es aprobado, se almacena vinculado a la iniciativa.
-5. El contenido aparece en el panel público en < 2 s.
+4. El contenido aparece en el panel público en < 2 s.
 
-**Flujo alternativo — formato de archivo no permitido:**
-- En el paso 4, el sistema rechaza el archivo y muestra mensaje con formatos admitidos.
+
 
 ---
 
