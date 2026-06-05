@@ -1,0 +1,200 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f4f5f7;
+  color: #1a1a2e;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Layout */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+
+.app-header {
+  background: #1e3a5f;
+  color: #fff;
+  padding: 14px 32px;
+  cursor: default;
+}
+.app-header h1 { font-size: 20px; font-weight: 700; cursor: pointer; }
+.app-header p  { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+.app-main {
+  flex: 1;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.page-header h2 { font-size: 18px; }
+
+.header-actions { display: flex; gap: 8px; }
+
+/* Buttons */
+.btn-primary {
+  background: #1e3a5f; color: #fff; border: none;
+  padding: 7px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;
+}
+.btn-primary:hover    { background: #2a4f7f; }
+.btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+
+.btn-secondary {
+  background: #fff; color: #1e3a5f; border: 1px solid #1e3a5f;
+  padding: 7px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;
+}
+.btn-secondary:hover { background: #f0f4fa; }
+
+.btn-danger {
+  background: #dc2626; color: #fff; border: none;
+  padding: 7px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;
+}
+.btn-danger:hover { background: #b91c1c; }
+
+.btn-link {
+  background: none; border: none; color: #2563eb;
+  cursor: pointer; font-size: 13px; text-decoration: underline; padding: 0;
+}
+
+.btn-wide { width: 100%; padding: 10px; font-size: 15px; margin-top: 6px; }
+
+/* Forms */
+.form-container {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+label {
+  display: flex; flex-direction: column; gap: 4px;
+  margin-bottom: 12px; font-size: 14px; font-weight: 500;
+}
+
+input, textarea, select {
+  border: 1px solid #cbd5e1; border-radius: 4px;
+  padding: 7px 10px; font-size: 14px; font-family: inherit; width: 100%;
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid #1e3a5f; border-color: transparent;
+}
+
+.form-actions { display: flex; gap: 8px; margin-top: 6px; }
+
+.row-title {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.row-title h3 { font-size: 15px; }
+
+/* Pattern badge */
+.pattern-badge {
+  display: inline-block; color: #fff; font-size: 10px; font-weight: 700;
+  padding: 2px 8px; border-radius: 10px; letter-spacing: 0.5px; text-transform: uppercase;
+}
+
+.pattern-note {
+  font-size: 12px; color: #64748b; margin-bottom: 10px; font-style: italic;
+}
+
+/* Notice */
+.notice {
+  background: #dcfce7; color: #15803d; border: 1px solid #86efac;
+  padding: 9px 14px; border-radius: 4px; margin-bottom: 14px;
+  font-size: 13px; cursor: pointer;
+}
+
+/* Initiative list */
+.initiative-list { display: flex; flex-direction: column; gap: 10px; }
+
+.initiative-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 6px;
+  padding: 14px 16px; cursor: pointer; transition: border-color 0.15s;
+}
+.initiative-card:hover { border-color: #1e3a5f; }
+
+.card-top {
+  display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+}
+.card-top h3 { font-size: 15px; }
+
+.card-bottom {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: #64748b; margin-top: 4px;
+}
+
+/* Status badge */
+.status-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 10px; text-transform: uppercase; white-space: nowrap;
+}
+.status-borrador         { background: #f1f5f9; color: #475569; }
+.status-activa           { background: #dcfce7; color: #15803d; }
+.status-lista-para-envio { background: #fef9c3; color: #854d0e; }
+.status-enviada          { background: #dbeafe; color: #1d4ed8; }
+.status-expirada         { background: #fee2e2; color: #dc2626; }
+
+/* Progress */
+.progress-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin: 4px 0; }
+.progress-bar.large { height: 12px; }
+.progress-fill { height: 100%; background: #1e3a5f; border-radius: 3px; transition: width 0.3s ease; }
+
+/* Detail */
+.detail-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 22px;
+}
+.detail-card h2 { font-size: 18px; margin-bottom: 10px; }
+
+.detail-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+
+.radicacion { font-size: 13px; color: #059669; font-weight: 600; }
+
+.section { border-top: 1px solid #f1f5f9; padding-top: 14px; margin-top: 14px; }
+
+.content-text { color: #374151; line-height: 1.65; }
+
+.seal-box {
+  background: #f0fdf4; border: 1px solid #bbf7d0;
+  border-radius: 4px; padding: 12px; margin-top: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.seal-box strong { font-size: 13px; color: #15803d; }
+.hash { font-size: 11px; word-break: break-all; color: #374151; font-family: monospace; }
+.seal-date { font-size: 11px; color: #64748b; }
+
+.sign-msg { font-size: 13px; color: #059669; margin-top: 6px; }
+
+/* Comments */
+.comment-form { margin-bottom: 14px; }
+.comment-form textarea { margin-bottom: 6px; }
+
+.reply-bar {
+  background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px;
+  padding: 6px 10px; font-size: 13px; margin-bottom: 8px;
+  display: flex; gap: 8px; align-items: center;
+}
+
+.comment-tree { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.comment-node {
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 4px; padding: 10px;
+}
+
+.comment-header { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.comment-author { font-weight: 600; font-size: 13px; }
+.comment-meta   { font-size: 11px; color: #94a3b8; }
+.comment-text   { font-size: 14px; }
+.comment-children { margin-top: 8px; }
+
+/* Misc */
+.empty-state { color: #94a3b8; font-size: 14px; padding: 12px 0; }
+.error       { color: #dc2626; font-size: 13px; margin-top: 4px; }
+.loading     { color: #64748b; padding: 20px 0; }
