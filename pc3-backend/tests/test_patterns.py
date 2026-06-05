@@ -8,7 +8,6 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def reset_store():
-    """Limpia el store en memoria antes de cada test para garantizar aislamiento."""
     store["users"].clear()
     store["initiatives"].clear()
     store["signatures"].clear()
@@ -17,18 +16,20 @@ def reset_store():
     yield
 
 
-# --- Helpers reutilizables ---
-
-def register_user(name="Ana Lopez", email="ana@test.com"):
-    res = client.post("/api/auth/register", json={"name": name, "email": email})
+def register_user(name="Ana Lopez", email="ana@test.com", dni="12345678", password="pass123"):
+    res = client.post("/api/auth/register", json={
+        "name": name, "email": email, "dni": dni, "password": password
+    })
     assert res.status_code == 200
     return res.json()
 
 
 def register_verified_user(name="Ana Lopez", email="ana@test.com"):
-    user = register_user(name, email)
-    client.post(f"/api/auth/verify/{user['id']}")
-    return user
+    return register_user(name, email, dni="12345678")
+
+
+def register_unverified_user(name="Juan", email="juan@test.com"):
+    return register_user(name, email, dni="00000000")
 
 
 def create_active_initiative(author_id, title="Ley de prueba", content="Art. 1. Se establece."):
@@ -43,48 +44,53 @@ def create_active_initiative(author_id, title="Ley de prueba", content="Art. 1. 
     return pub.json()
 
 
-# =============================================================================
-# CP-01 — Adapter: ReniecAdapter
-# =============================================================================
-
 class TestAdapterReniec:
 
-    def test_verificacion_exitosa(self):
-        """Usuario registrado puede ser verificado. El Adapter retorna True."""
-        user = register_user()
-        res = client.post(f"/api/auth/verify/{user['id']}")
+    def test_registro_con_dni_valido_verifica_usuario(self):
+        user = register_user(dni="12345678")
+        assert user["verified"] is True
+
+    def test_registro_con_dni_invalido_no_verifica(self):
+        user = register_user(dni="00000000")
+        assert user["verified"] is False
+
+    def test_dni_con_formato_incorrecto_rechazado(self):
+        res = client.post("/api/auth/register", json={
+            "name": "X", "email": "x@x.com", "dni": "1234", "password": "pass123"
+        })
+        assert res.status_code == 422
+
+    def test_email_duplicado_rechazado(self):
+        register_user()
+        res = client.post("/api/auth/register", json={
+            "name": "Otro", "email": "ana@test.com", "dni": "12345678", "password": "pass123"
+        })
+        assert res.status_code == 400
+
+
+class TestLogin:
+
+    def test_login_exitoso(self):
+        register_user()
+        res = client.post("/api/auth/login", json={"email": "ana@test.com", "password": "pass123"})
         assert res.status_code == 200
-        assert res.json()["verified"] is True
+        data = res.json()
+        assert data["email"] == "ana@test.com"
+        assert "password" not in data
 
-    def test_usuario_inexistente_devuelve_404(self):
-        """El Adapter no llega al stub si el usuario no existe en el sistema."""
-        res = client.post("/api/auth/verify/id-inexistente")
-        assert res.status_code == 404
+    def test_password_incorrecto(self):
+        register_user()
+        res = client.post("/api/auth/login", json={"email": "ana@test.com", "password": "wrongpass"})
+        assert res.status_code == 401
 
-    def test_verificacion_es_idempotente(self):
-        """Verificar dos veces al mismo usuario no produce error."""
-        user = register_user()
-        client.post(f"/api/auth/verify/{user['id']}")
-        res = client.post(f"/api/auth/verify/{user['id']}")
-        assert res.status_code == 200
-        assert res.json()["verified"] is True
+    def test_email_inexistente(self):
+        res = client.post("/api/auth/login", json={"email": "noexiste@test.com", "password": "pass123"})
+        assert res.status_code == 401
 
-    def test_usuario_no_verificado_tiene_verified_false(self):
-        """Un usuario recien registrado sin verificar tiene verified=False."""
-        user = register_user()
-        res = client.get("/api/auth/users")
-        found = next(u for u in res.json() if u["id"] == user["id"])
-        assert found["verified"] is False
-
-
-# =============================================================================
-# CP-02 — Facade: InitiativeFacade
-# =============================================================================
 
 class TestFacadeInitiative:
 
     def test_publicacion_exitosa(self):
-        """La Facade orquesta correctamente: BORRADOR -> ACTIVA con deadline."""
         user = register_verified_user()
         res = client.post("/api/initiatives", json={
             "title": "Ley de agua potable",
@@ -93,7 +99,6 @@ class TestFacadeInitiative:
         })
         initiative = res.json()
         assert initiative["status"] == "BORRADOR"
-        assert initiative["published_at"] is None
 
         pub = client.post(f"/api/initiatives/{initiative['id']}/publish",
                           json={"author_id": user["id"]})
@@ -104,7 +109,6 @@ class TestFacadeInitiative:
         assert data["deadline"] is not None
 
     def test_titulo_vacio_rechazado(self):
-        """La Facade valida el titulo antes de crear."""
         user = register_verified_user()
         res = client.post("/api/initiatives", json={
             "title": "", "content": "Contenido.", "author_id": user["id"]
@@ -112,7 +116,6 @@ class TestFacadeInitiative:
         assert res.status_code == 422
 
     def test_publicacion_doble_rechazada(self):
-        """Publicar una iniciativa ya ACTIVA lanza error de negocio."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         res = client.post(f"/api/initiatives/{initiative['id']}/publish",
@@ -121,7 +124,6 @@ class TestFacadeInitiative:
         assert "BORRADOR" in res.json()["detail"]
 
     def test_autor_incorrecto_no_puede_publicar(self):
-        """Solo el autor puede publicar su iniciativa."""
         user = register_verified_user()
         otro = register_verified_user("Carlos", "carlos@test.com")
         res = client.post("/api/initiatives", json={
@@ -134,14 +136,9 @@ class TestFacadeInitiative:
         assert "autor" in pub.json()["detail"].lower()
 
 
-# =============================================================================
-# CP-03 — Decorator: DuplicateCheckDecorator + MetadataEnrichmentDecorator
-# =============================================================================
-
 class TestDecoratorSignature:
 
     def test_primera_firma_valida_con_metadata(self):
-        """La firma incluye doc_hash y timestamp inyectados por el Decorator."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         res = client.post(f"/api/initiatives/{initiative['id']}/sign",
@@ -151,10 +148,9 @@ class TestDecoratorSignature:
         assert sig["status"] == "VALIDA"
         assert "doc_hash" in sig
         assert "timestamp" in sig
-        assert len(sig["doc_hash"]) == 64  # SHA-256
+        assert len(sig["doc_hash"]) == 64
 
     def test_firma_duplicada_rechazada(self):
-        """DuplicateCheckDecorator impide que el mismo ciudadano firme dos veces."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         client.post(f"/api/initiatives/{initiative['id']}/sign",
@@ -165,17 +161,15 @@ class TestDecoratorSignature:
         assert "ya firmo" in res.json()["detail"]
 
     def test_ciudadano_no_verificado_no_puede_firmar(self):
-        """La cadena de decoradores rechaza antes si el ciudadano no esta verificado."""
         author = register_verified_user()
         initiative = create_active_initiative(author["id"])
-        no_verificado = register_user("Juan", "juan@test.com")
+        no_verificado = register_unverified_user()
         res = client.post(f"/api/initiatives/{initiative['id']}/sign",
                           json={"user_id": no_verificado["id"]})
         assert res.status_code == 400
         assert "verificado" in res.json()["detail"]
 
     def test_firma_sobre_iniciativa_no_activa_rechazada(self):
-        """El Decorator no se alcanza si la iniciativa no esta en estado ACTIVA."""
         user = register_verified_user()
         res = client.post("/api/initiatives", json={
             "title": "Ley borrador", "content": "Art. 1.", "author_id": user["id"]
@@ -187,14 +181,9 @@ class TestDecoratorSignature:
         assert "activa" in sign.json()["detail"].lower()
 
 
-# =============================================================================
-# CP-04 — Composite: CommentBranch / CommentLeaf
-# =============================================================================
-
 class TestCompositeComments:
 
     def test_comentario_raiz_es_branch(self):
-        """Un comentario raiz se crea como CommentBranch (can_reply=True)."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         res = client.post(f"/api/initiatives/{initiative['id']}/comments", json={
@@ -207,7 +196,6 @@ class TestCompositeComments:
         assert data["parent_id"] is None
 
     def test_respuesta_nivel_2(self):
-        """Una respuesta a nivel 1 genera un nodo de nivel 2."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         l1 = client.post(f"/api/initiatives/{initiative['id']}/comments", json={
@@ -220,7 +208,6 @@ class TestCompositeComments:
         assert res.json()["level"] == 2
 
     def test_nivel_maximo_es_leaf(self):
-        """El nodo de nivel 3 se crea como CommentLeaf (can_reply=False)."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         l1 = client.post(f"/api/initiatives/{initiative['id']}/comments", json={
@@ -236,7 +223,6 @@ class TestCompositeComments:
         assert l3["can_reply"] is False
 
     def test_nivel_4_bloqueado(self):
-        """El Composite rechaza comentarios mas alla de la profundidad maxima (3)."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         l1 = client.post(f"/api/initiatives/{initiative['id']}/comments", json={
@@ -255,7 +241,6 @@ class TestCompositeComments:
         assert "profundidad" in res.json()["detail"].lower()
 
     def test_arbol_se_construye_correctamente(self):
-        """GET /comments devuelve los nodos hijos anidados bajo el padre."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         l1 = client.post(f"/api/initiatives/{initiative['id']}/comments", json={
@@ -270,14 +255,9 @@ class TestCompositeComments:
         assert len(roots[0]["children"]) == 1
 
 
-# =============================================================================
-# CP-05 — Proxy: CryptographicSealProxy
-# =============================================================================
-
 class TestProxyCryptographicSeal:
 
     def test_sellado_genera_hash_sha512(self):
-        """El Proxy genera un hash SHA-512 de 128 caracteres hexadecimales."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         res = client.post(f"/api/initiatives/{initiative['id']}/seal")
@@ -285,10 +265,9 @@ class TestProxyCryptographicSeal:
         detail = client.get(f"/api/initiatives/{initiative['id']}").json()
         assert detail["sealed"] is True
         assert detail["seal_hash"] is not None
-        assert len(detail["seal_hash"]) == 128  # SHA-512 hex
+        assert len(detail["seal_hash"]) == 128
 
     def test_expediente_pasa_a_enviada_con_radicacion(self):
-        """Tras el sello el CongressApiAdapter asigna numero de radicacion."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         client.post(f"/api/initiatives/{initiative['id']}/seal")
@@ -297,7 +276,6 @@ class TestProxyCryptographicSeal:
         assert detail["radicacion"].startswith("RAD-")
 
     def test_firma_post_sello_bloqueada(self):
-        """El Proxy deniega escrituras sobre un expediente ya sellado."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         client.post(f"/api/initiatives/{initiative['id']}/seal")
@@ -307,7 +285,6 @@ class TestProxyCryptographicSeal:
         assert res.status_code == 400
 
     def test_doble_sellado_rechazado(self):
-        """El Proxy detecta que el expediente ya fue sellado y lo rechaza."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         client.post(f"/api/initiatives/{initiative['id']}/seal")
@@ -316,7 +293,6 @@ class TestProxyCryptographicSeal:
         assert "sellado" in res.json()["detail"].lower()
 
     def test_auditoria_registra_seal_and_send(self):
-        """El log de auditoria incluye la accion SEAL_AND_SEND tras el sello."""
         user = register_verified_user()
         initiative = create_active_initiative(user["id"])
         client.post(f"/api/initiatives/{initiative['id']}/seal")

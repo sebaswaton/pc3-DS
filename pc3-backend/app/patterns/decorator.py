@@ -1,24 +1,14 @@
-# Pattern: Decorator
-# Agrega responsabilidades a SignatureService de forma dinamica
-# sin modificar la clase base.
-# DuplicateCheckDecorator: evita que un ciudadano firme dos veces.
-# MetadataEnrichmentDecorator: enriquece la firma con hash del documento y timestamp.
-
 from abc import ABC, abstractmethod
 import hashlib
 import uuid
 from datetime import datetime, timezone
 
 
-# --- Interfaz componente ---
-
 class SignatureService(ABC):
     @abstractmethod
     def sign(self, user_id: str, initiative_id: str, db: dict) -> dict:
         pass
 
-
-# --- Componente concreto ---
 
 class BaseSignatureService(SignatureService):
     def sign(self, user_id: str, initiative_id: str, db: dict) -> dict:
@@ -32,8 +22,6 @@ class BaseSignatureService(SignatureService):
         return sig
 
 
-# --- Decorador base ---
-
 class SignatureDecorator(SignatureService):
     def __init__(self, wrapped: SignatureService):
         self._wrapped = wrapped
@@ -42,11 +30,7 @@ class SignatureDecorator(SignatureService):
         return self._wrapped.sign(user_id, initiative_id, db)
 
 
-# --- Decoradores concretos ---
-
 class DuplicateCheckDecorator(SignatureDecorator):
-    """Rechaza una segunda firma del mismo ciudadano sobre la misma iniciativa."""
-
     def sign(self, user_id: str, initiative_id: str, db: dict) -> dict:
         already_signed = any(
             s["user_id"] == user_id and s["initiative_id"] == initiative_id
@@ -58,8 +42,6 @@ class DuplicateCheckDecorator(SignatureDecorator):
 
 
 class MetadataEnrichmentDecorator(SignatureDecorator):
-    """Enriquece la firma con el hash SHA-256 del documento y el timestamp UTC."""
-
     def sign(self, user_id: str, initiative_id: str, db: dict) -> dict:
         sig = super().sign(user_id, initiative_id, db)
         content = db.get("initiatives", {}).get(initiative_id, {}).get("content", "")

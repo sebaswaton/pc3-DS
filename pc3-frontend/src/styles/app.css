@@ -16,9 +16,33 @@ body {
   color: #fff;
   padding: 14px 32px;
   cursor: default;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .app-header h1 { font-size: 20px; font-weight: 700; cursor: pointer; }
 .app-header p  { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+.user-info { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.user-name { font-weight: 600; }
+
+.verified-badge {
+  background: #22c55e; color: #fff; font-size: 11px;
+  padding: 2px 7px; border-radius: 10px; font-weight: 600;
+}
+
+.info-banner {
+  background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8;
+  padding: 9px 14px; border-radius: 4px; margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.auth-page { display: flex; justify-content: center; }
+.auth-page .form-container { max-width: 400px; width: 100%; }
+
+.auth-switch { font-size: 13px; color: #64748b; margin-top: 12px; text-align: center; }
 
 .app-main {
   flex: 1;
