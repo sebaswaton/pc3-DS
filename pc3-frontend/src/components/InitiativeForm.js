@@ -1,21 +1,19 @@
 import React, { useState } from 'react'
-import PatternBadge from './PatternBadge.js'
 
-export default function InitiativeForm({ users, onSubmit, onCancel }) {
+export default function InitiativeForm({ authorId, onSubmit, onCancel }) {
   const [title, setTitle]     = useState('')
   const [content, setContent] = useState('')
-  const [authorId, setAuthor] = useState('')
   const [error, setError]     = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!title || !content || !authorId) {
+    if (!title || !content) {
       setError('Todos los campos son obligatorios')
       return
     }
     setError('')
     try {
-      await onSubmit(title, content, authorId)
+      await onSubmit(title, content)
     } catch (err) {
       setError(err.message)
     }
@@ -23,11 +21,7 @@ export default function InitiativeForm({ users, onSubmit, onCancel }) {
 
   return (
     <div className="form-container">
-      <div className="row-title">
-        <h3>Nueva Iniciativa</h3>
-        <PatternBadge pattern="Facade" />
-      </div>
-      <p className="pattern-note">InitiativeFacade orquesta creacion, publicacion y reglas.</p>
+      <h3>Nueva Iniciativa</h3>
       <form onSubmit={handleSubmit}>
         <label>
           Titulo
@@ -36,15 +30,6 @@ export default function InitiativeForm({ users, onSubmit, onCancel }) {
         <label>
           Articulado normativo
           <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} />
-        </label>
-        <label>
-          Colectivo autor
-          <select value={authorId} onChange={(e) => setAuthor(e.target.value)}>
-            <option value="">Seleccionar...</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
         </label>
         {error && <p className="error">{error}</p>}
         <div className="form-actions">

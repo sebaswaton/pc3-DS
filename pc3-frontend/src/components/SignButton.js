@@ -1,9 +1,5 @@
 import React, { useState } from 'react'
-import PatternBadge from './PatternBadge.js'
 import { signInitiative } from '../api/client.js'
-
-// Al llamar signInitiative, el backend aplica la cadena de Decoradores:
-// DuplicateCheckDecorator -> MetadataEnrichmentDecorator -> BaseSignatureService
 
 export default function SignButton({ initiative, userId, onSigned }) {
   const [loading, setLoading] = useState(false)
@@ -26,13 +22,7 @@ export default function SignButton({ initiative, userId, onSigned }) {
 
   return (
     <div className="sign-section">
-      <div className="row-title">
-        <h3>Firmar Iniciativa</h3>
-        <PatternBadge pattern="Decorator" />
-      </div>
-      <p className="pattern-note">
-        DuplicateCheckDecorator + MetadataEnrichmentDecorator envuelven la firma base.
-      </p>
+      <h3>Firmar Iniciativa</h3>
       <button
         className="btn-primary btn-wide"
         onClick={handleSign}

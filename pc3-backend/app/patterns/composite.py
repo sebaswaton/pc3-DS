@@ -1,18 +1,9 @@
-# Pattern: Composite
-# Modela el hilo de comentarios como un arbol parte-todo.
-# CommentComponent: interfaz comun para hoja y rama.
-# CommentLeaf: nodo sin hijos (profundidad maxima alcanzada).
-# CommentBranch: nodo que puede contener hijos.
-# build_comment(): selecciona el tipo correcto segun la profundidad.
-
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 import uuid
 
 MAX_DEPTH = 3
 
-
-# --- Interfaz componente ---
 
 class CommentComponent(ABC):
     @abstractmethod
@@ -23,8 +14,6 @@ class CommentComponent(ABC):
     def level(self) -> int:
         pass
 
-
-# --- Hoja ---
 
 class CommentLeaf(CommentComponent):
     def __init__(self, text: str, author_id: str, parent_id: str | None, depth: int):
@@ -50,8 +39,6 @@ class CommentLeaf(CommentComponent):
             "can_reply": False,
         }
 
-
-# --- Rama ---
 
 class CommentBranch(CommentComponent):
     def __init__(self, text: str, author_id: str, parent_id: str | None, depth: int):
@@ -84,14 +71,14 @@ class CommentBranch(CommentComponent):
         }
 
 
-# --- Funcion de fabrica ---
-
 def build_comment(
     text: str,
     author_id: str,
     parent_id: str | None = None,
     depth: int = 1,
 ) -> CommentComponent:
-    if depth >= MAX_DEPTH:
+    if depth > MAX_DEPTH:
+        raise ValueError(f"Profundidad maxima de comentarios ({MAX_DEPTH}) alcanzada")
+    if depth == MAX_DEPTH:
         return CommentLeaf(text, author_id, parent_id, depth)
     return CommentBranch(text, author_id, parent_id, depth)

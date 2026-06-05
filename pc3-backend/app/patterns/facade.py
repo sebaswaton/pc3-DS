@@ -1,9 +1,3 @@
-# Pattern: Facade
-# InitiativeFacade provee una interfaz unica y simplificada que orquesta
-# los subsistemas: Adapter (RENIEC), Decorator (firmas), Proxy (sellado)
-# y Adapter (despacho al Congreso). Los clientes interactuan solo con
-# la Facade, nunca con los subsistemas directamente.
-
 from datetime import datetime, timezone, timedelta
 import uuid
 
@@ -28,8 +22,6 @@ class InitiativeFacade:
             DuplicateCheckDecorator(base_sig)
         )
         self._congress_adapter = CongressApiAdapter()
-
-    # --- Operaciones publicas de la Facade ---
 
     def create_initiative(self, title: str, content: str, author_id: str) -> dict:
         initiative_id = str(uuid.uuid4())
@@ -79,7 +71,6 @@ class InitiativeFacade:
         if not user or not user.get("verified"):
             raise PermissionError("El ciudadano debe estar verificado para firmar")
 
-        # Decorator chain: DuplicateCheck -> MetadataEnrichment -> Base
         signature = self._signature_service.sign(user_id, initiative_id, store)
         initiative["signature_count"] += 1
         add_audit("SIGN", user_id, initiative_id)
@@ -93,19 +84,18 @@ class InitiativeFacade:
         initiative = store["initiatives"].get(initiative_id)
         if not initiative:
             raise ValueError("Iniciativa no encontrada")
+        if initiative.get("sealed"):
+            expedient = InitiativeExpedient(initiative_id, store)
+            CryptographicSealProxy(expedient).seal()
         if initiative["status"] not in ("ACTIVA", "LISTA_PARA_ENVIO"):
             raise ValueError("La iniciativa no esta en un estado valido para sellar")
         return self._seal_and_dispatch(initiative_id)
 
-    # --- Subsistema interno ---
-
     def _seal_and_dispatch(self, initiative_id: str) -> dict:
-        # Proxy: sella criptograficamente el expediente
         expedient = InitiativeExpedient(initiative_id, store)
         proxy = CryptographicSealProxy(expedient)
         seal_hash = proxy.seal()
 
-        # Adapter: envia a la API del Congreso
         result = self._congress_adapter.send(
             initiative_id, store["initiatives"][initiative_id]
         )

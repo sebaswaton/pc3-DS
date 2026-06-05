@@ -1,8 +1,3 @@
-// Pattern: Composite (renderizado cliente)
-// CommentNode renderiza un comentario y recursivamente sus hijos,
-// replicando la estructura parte-todo del backend:
-// nodos hoja (can_reply=false) y nodos rama (can_reply=true).
-
 import React from 'react'
 
 function CommentNode({ comment, depth, onReply }) {
