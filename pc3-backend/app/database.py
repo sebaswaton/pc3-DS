@@ -1,11 +1,10 @@
 from datetime import datetime, timezone
 
-# In-memory store. In production this would be a real database.
 store = {
-    "users": {},        # user_id -> user dict
-    "initiatives": {},  # initiative_id -> initiative dict
-    "signatures": {},   # sig_id -> signature dict
-    "comments": {},     # initiative_id -> list of comment dicts
+    "users": {},
+    "initiatives": {},
+    "signatures": {},
+    "comments": {},
     "audit_log": [],
 }
 

@@ -1,15 +1,7 @@
-# Pattern: Proxy
-# CryptographicSealProxy controla el acceso al expediente de una iniciativa.
-# Antes del sellado: delega lecturas y escrituras al sujeto real.
-# Despues del sellado: deniega toda operacion de escritura (expediente de solo lectura).
-# Al sellar: genera hash SHA-512 y registra el timestamp del sello.
-
 import hashlib
 import json
 from datetime import datetime, timezone
 
-
-# --- Sujeto real ---
 
 class InitiativeExpedient:
     def __init__(self, initiative_id: str, db: dict):
@@ -22,8 +14,6 @@ class InitiativeExpedient:
     def update(self, data: dict):
         self._db["initiatives"][self._id].update(data)
 
-
-# --- Proxy ---
 
 class CryptographicSealProxy:
     def __init__(self, expedient: InitiativeExpedient):

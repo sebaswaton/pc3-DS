@@ -5,6 +5,13 @@ from typing import Optional
 class RegisterRequest(BaseModel):
     name: str
     email: str
+    dni: str = Field(pattern=r'^\d{8}$')
+    password: str = Field(min_length=6)
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 class CreateInitiativeRequest(BaseModel):
