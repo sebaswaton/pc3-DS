@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import {
-  getInitiative, listUsers, getComments, addComment, sealInitiative,
+  getInitiative, getComments, addComment, sealInitiative,
 } from '../api/client.js'
 import { CommentTree } from '../patterns/CompositeComment.js'
 import SignButton from '../components/SignButton.js'
-import PatternBadge from '../components/PatternBadge.js'
 
-export default function InitiativePage({ initiativeId, navigate }) {
+export default function InitiativePage({ initiativeId, navigate, currentUser }) {
   const [initiative, setInitiative] = useState(null)
-  const [users, setUsers]           = useState([])
   const [comments, setComments]     = useState([])
-  const [userId, setUserId]         = useState('')
   const [commentText, setComment]   = useState('')
   const [replyTo, setReplyTo]       = useState(null)
   const [msg, setMsg]               = useState('')
@@ -18,13 +15,11 @@ export default function InitiativePage({ initiativeId, navigate }) {
   useEffect(() => { loadAll() }, [initiativeId])
 
   async function loadAll() {
-    const [init, usrs, cmts] = await Promise.all([
+    const [init, cmts] = await Promise.all([
       getInitiative(initiativeId),
-      listUsers(),
       getComments(initiativeId),
     ])
     setInitiative(init)
-    setUsers(usrs)
     setComments(cmts.comments || [])
   }
 
@@ -38,9 +33,9 @@ export default function InitiativePage({ initiativeId, navigate }) {
 
   async function handleComment(e) {
     e.preventDefault()
-    if (!commentText || !userId) { setMsg('Seleccione usuario e ingrese texto'); return }
+    if (!commentText) { setMsg('Escribe un comentario'); return }
     try {
-      await addComment(initiativeId, commentText, userId, replyTo)
+      await addComment(initiativeId, commentText, currentUser.id, replyTo)
       setComment(''); setReplyTo(null); setMsg('')
       const updated = await getComments(initiativeId)
       setComments(updated.comments || [])
@@ -80,13 +75,7 @@ export default function InitiativePage({ initiativeId, navigate }) {
         </div>
 
         <div className="section">
-          <div className="row-title">
-            <span>{initiative.signature_count.toLocaleString()} / 25,000 firmas</span>
-            <PatternBadge pattern="Proxy" />
-          </div>
-          <p className="pattern-note">
-            CryptographicSealProxy congela el expediente al alcanzar 25,000 firmas y bloquea escrituras posteriores.
-          </p>
+          <span>{initiative.signature_count.toLocaleString()} / 25,000 firmas</span>
           <div className="progress-bar large">
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>
@@ -105,65 +94,53 @@ export default function InitiativePage({ initiativeId, navigate }) {
           </div>
         )}
 
-        <div className="section">
-          <label>
-            Ciudadano activo
-            <select value={userId} onChange={(e) => setUserId(e.target.value)}>
-              <option value="">Seleccionar...</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} {u.verified ? '(verificado)' : '(no verificado)'}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        {currentUser ? (
+          <>
+            <SignButton initiative={initiative} userId={currentUser.id} onSigned={handleSigned} />
 
-        <SignButton initiative={initiative} userId={userId} onSigned={handleSigned} />
-
-        {initiative.status === 'ACTIVA' && (
-          <div className="section">
-            <div className="row-title">
-              <h3>Sellado manual</h3>
-              <PatternBadge pattern="Proxy" />
-            </div>
-            <button className="btn-danger" onClick={handleSeal}>
-              Sellar y enviar al Congreso
-            </button>
-          </div>
+            {initiative.status === 'ACTIVA' && (
+              <div className="section">
+                <h3>Sellado manual</h3>
+                <button className="btn-danger" onClick={handleSeal}>
+                  Sellar y enviar al Congreso
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="info-banner">Inicia sesion para firmar esta iniciativa.</div>
         )}
 
         <div className="section">
-          <div className="row-title">
-            <h3>Comentarios</h3>
-            <PatternBadge pattern="Composite" />
-          </div>
-          <p className="pattern-note">
-            Arbol parte-todo: CommentBranch (puede responder) / CommentLeaf (nivel maximo, sin respuesta).
-          </p>
+          <h3>Comentarios</h3>
 
-          {replyTo && (
-            <div className="reply-bar">
-              Respondiendo a {replyTo.slice(0, 8)}...
-              <button className="btn-link" onClick={() => setReplyTo(null)}>cancelar</button>
-            </div>
+          {currentUser ? (
+            <>
+              {replyTo && (
+                <div className="reply-bar">
+                  Respondiendo a {replyTo.slice(0, 8)}...
+                  <button className="btn-link" onClick={() => setReplyTo(null)}>cancelar</button>
+                </div>
+              )}
+              <form onSubmit={handleComment} className="comment-form">
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Escribe un comentario..."
+                  rows={3}
+                  maxLength={2000}
+                />
+                <button type="submit" className="btn-primary">
+                  {replyTo ? 'Responder' : 'Comentar'}
+                </button>
+              </form>
+            </>
+          ) : (
+            <div className="info-banner">Inicia sesion para comentar.</div>
           )}
 
-          <form onSubmit={handleComment} className="comment-form">
-            <textarea
-              value={commentText}
-              onChange={(e) => setComment(e.target.value)}
-              placeholder="Escribe un comentario..."
-              rows={3}
-              maxLength={2000}
-            />
-            <button type="submit" className="btn-primary">
-              {replyTo ? 'Responder' : 'Comentar'}
-            </button>
-          </form>
-
           {msg && <p className="error">{msg}</p>}
-          <CommentTree comments={comments} onReply={setReplyTo} />
+          <CommentTree comments={comments} onReply={currentUser ? setReplyTo : null} />
         </div>
       </div>
     </div>

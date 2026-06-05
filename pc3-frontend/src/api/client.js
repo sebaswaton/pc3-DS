@@ -1,7 +1,3 @@
-// Pattern: Facade (lado cliente)
-// Todos los componentes llaman a traves de este modulo.
-// Abstrae el transporte HTTP y expone operaciones de negocio con nombre claro.
-
 const BASE = 'http://localhost:8000/api'
 
 async function req(method, path, body) {
@@ -15,17 +11,15 @@ async function req(method, path, body) {
   return res.json()
 }
 
-// Autenticacion (Adapter en backend: ReniecAdapter)
-export const registerUser = (name, email) =>
-  req('POST', '/auth/register', { name, email })
+export const registerUser = (name, email, dni, password) =>
+  req('POST', '/auth/register', { name, email, dni, password })
 
-export const verifyUser = (userId) =>
-  req('POST', `/auth/verify/${userId}`)
+export const loginUser = (email, password) =>
+  req('POST', '/auth/login', { email, password })
 
 export const listUsers = () =>
   req('GET', '/auth/users')
 
-// Iniciativas (Facade en backend: InitiativeFacade)
 export const listInitiatives = () =>
   req('GET', '/initiatives')
 
@@ -41,11 +35,9 @@ export const publishInitiative = (id, authorId) =>
 export const sealInitiative = (id) =>
   req('POST', `/initiatives/${id}/seal`)
 
-// Firmas (Decorator en backend: DuplicateCheck + MetadataEnrichment)
 export const signInitiative = (initiativeId, userId) =>
   req('POST', `/initiatives/${initiativeId}/sign`, { user_id: userId })
 
-// Comentarios (Composite en backend: CommentBranch / CommentLeaf)
 export const getComments = (initiativeId) =>
   req('GET', `/initiatives/${initiativeId}/comments`)
 
