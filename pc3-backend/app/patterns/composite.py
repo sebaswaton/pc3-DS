@@ -92,6 +92,8 @@ def build_comment(
     parent_id: str | None = None,
     depth: int = 1,
 ) -> CommentComponent:
-    if depth >= MAX_DEPTH:
+    if depth > MAX_DEPTH:
+        raise ValueError(f"Profundidad maxima de comentarios ({MAX_DEPTH}) alcanzada")
+    if depth == MAX_DEPTH:
         return CommentLeaf(text, author_id, parent_id, depth)
     return CommentBranch(text, author_id, parent_id, depth)

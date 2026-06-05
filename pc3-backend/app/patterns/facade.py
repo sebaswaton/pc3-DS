@@ -93,6 +93,10 @@ class InitiativeFacade:
         initiative = store["initiatives"].get(initiative_id)
         if not initiative:
             raise ValueError("Iniciativa no encontrada")
+        # Delegar al Proxy primero: el detecta si ya fue sellado
+        if initiative.get("sealed"):
+            expedient = InitiativeExpedient(initiative_id, store)
+            CryptographicSealProxy(expedient).seal()  # lanza PermissionError
         if initiative["status"] not in ("ACTIVA", "LISTA_PARA_ENVIO"):
             raise ValueError("La iniciativa no esta en un estado valido para sellar")
         return self._seal_and_dispatch(initiative_id)
