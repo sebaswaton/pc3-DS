@@ -58,7 +58,7 @@ Un ciudadano verificado puede firmar una iniciativa `ACTIVA`. El sistema registr
 
 **Prioridad:** Media | **Patrón:** Composite (`CommentNode`)
 
-Los ciudadanos registrados pueden agregar comentarios (máx. 2 000 chars) con respuestas anidadas (máx. 3 niveles). Los ciudadanos verificados pueden proponer modificaciones al articulado y subir recursos (PDF/DOCX ≤ 10 MB, imágenes ≤ 5 MB, URL de video). Los archivos son escaneados con antivirus antes de almacenarse. La estructura de comentarios se modela como árbol Composite.
+Los ciudadanos registrados pueden agregar comentarios (máx. 2 000 chars) con respuestas anidadas (máx. 3 niveles). Los ciudadanos verificados pueden proponer modificaciones al articulado y subir recursos. La estructura de comentarios se modela como árbol Composite.
 
 **Criterio de aceptación:**
 - Los formatos no permitidos son rechazados con mensaje descriptivo.
